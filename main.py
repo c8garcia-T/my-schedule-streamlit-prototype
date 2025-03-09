@@ -57,7 +57,7 @@ def processFile(teacherNameParam, fileParam):
             }
             myData.append(assignedClassData)
     if myData:
-        st.success("Here Is Your Schedule")
+        st.success(f"Here Is Your Schedule, {teacherName}!")
     else:
         st.error("❌ No Information Found!")
         st.info("💡 Please enter your name as it appears in the schedule file")
