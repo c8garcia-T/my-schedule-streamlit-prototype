@@ -60,7 +60,7 @@ def processFile(teacherNameParam, fileParam):
         st.success("Here Is Your Schedule")
     else:
         st.error("❌ No Information Found!")
-        st.info("💡 Please type your name exactly as it appears in the Excel file")
+        st.info("💡 Please enter your name as it appears in the schedule file")
 
     for assignedClass in myData:
         with st.container():
@@ -79,11 +79,11 @@ def processFile(teacherNameParam, fileParam):
             st.divider()
 
 
-st.title("Hello")
+st.title("My Schedule 🍎")
 teacherName = st.text_input("Your Name")
 if not teacherName:
-    st.write("Please Enter Your Name (As Usually Seen On The Excel Work Schedule File")
-st.write()
+    st.info("💡 Please enter your name as it appears in the schedule file")
+
 uploaded_file = st.file_uploader(
     label="Upload Today's Work Schedule",
     accept_multiple_files=False,
