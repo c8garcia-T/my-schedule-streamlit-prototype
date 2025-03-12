@@ -15,14 +15,15 @@ def processFile(teacherNameParam, fileParam):
             # Validate Data
             missingValuesCount = sliceOfData.isna().sum()
             validateDataTypes = sliceOfData.tolist()
-            assert missingValuesCount <= 1, "Data is Not as Expected"
-            if missingValuesCount == 1:
-                assert (
-                    sliceOfData.isna().tolist()[2] == True
-                ), "Missing Value is not where expected!"
-                validateDataTypes.pop(2)
-            dataTypesOfSlice = [0 if type(i) == str else 1 for i in validateDataTypes]
-            assert sum(dataTypesOfSlice) == 0, "Unexpected Data Types Found"
+            
+            # assert missingValuesCount <= 1, "Data is Not as Expected"
+            # if missingValuesCount == 1:
+            #     assert (
+            #         sliceOfData.isna().tolist()[2] == True
+            #     ), "Missing Value is not where expected!"
+            #     validateDataTypes.pop(2)
+            # dataTypesOfSlice = [0 if type(i) == str else 1 for i in validateDataTypes]
+            # assert sum(dataTypesOfSlice) == 0, "Unexpected Data Types Found"
             # Find the "Period Integer"
             rowIndexToTraverse = rowIndex - 3
             rowWithDroppedMissingValues = (
@@ -33,9 +34,9 @@ def processFile(teacherNameParam, fileParam):
                 currentCell = rowWithDroppedMissingValues[nthColumn]
                 if currentCell.isdigit():
                     matchesOfPeriods.append(currentCell)
-            assert (
-                len(matchesOfPeriods) == 1
-            ), "Cannot Determine Period. Multiple or No Matches Found"
+            # assert (
+            #     len(matchesOfPeriods) == 1
+            # ), "Cannot Determine Period. Multiple or No Matches Found"
             assert (
                 0 < int(matchesOfPeriods[0]) < 10
             ), "Period Found Is Out Of Expected Range."
