@@ -1,60 +1,67 @@
 import streamlit as st
 import pandas as pd
 
-def processFile(teacherNameParam, fileParam):
-    teacherNameParam = teacherNameParam.strip().lower()
+
+def validatePeriodData(periodDataParam):
+    missingValuesCount = periodDataParam.isna().sum()
+    assert (
+        missingValuesCount <= 3
+    ), "Unexpected Error, Found More than 3 missing values."
+    validateDataTypes = periodDataParam.tolist()
+    if missingValuesCount == 1:  # Substitute Case
+        validateDataTypes.pop(2)
+    if missingValuesCount == 2:  # Catch 2 missing value case
+        validateDataTypes.pop(-1)
+        validateDataTypes.pop(2)
+    if missingValuesCount == 3:  # R&D Case
+        validateDataTypes.pop(1)
+        validateDataTypes.pop(1)
+        validateDataTypes.pop(-1)
+    dataTypesOfSlice = [0 if type(i) == str else 1 for i in validateDataTypes]
+    assert sum(dataTypesOfSlice) == 0, "Unexpected Data Types Found"
+
+
+def findPeriodAndTime(data, columnIndex):
+    periodAndTimeDataFound = []
+    for nthColumn in range(columnIndex, -1, -1):
+        currentCell = data[nthColumn]
+        if (currentCell.isdigit()) and (":" in data[nthColumn + 1]):
+            periodAndTimeDataFound.append((currentCell, data[nthColumn + 1]))
+    assert (
+        len(periodAndTimeDataFound) == 1
+    ), "Cannot Determine Period. Multiple or No Matches Found"
+    assert (
+        0 < int(periodAndTimeDataFound[0][0]) < 15
+    ), "Period Found Is Out Of Expected Range."
+    return periodAndTimeDataFound[0]
+
+
+def processFile(nameParam, fileParam):
+    name = nameParam.strip().lower()
     rawData = pd.read_excel(fileParam, sheet_name=0, header=None, dtype=str)
-
     myData = []
-
     for rowIndex, row in enumerate(rawData.itertuples(index=False, name="NthRow")):
         rowValues = [i.strip().lower() if type(i) == str else i for i in row]
-        if teacherNameParam in rowValues:
-            columnIndex = rowValues.index(teacherNameParam)
-            sliceOfData = rawData.iloc[rowIndex - 3 : rowIndex + 2, columnIndex]
+        if name in rowValues:
+            columnIndex = rowValues.index(name)
+            periodData = rawData.iloc[rowIndex - 3 : rowIndex + 2, columnIndex]
             # Validate Data
-            missingValuesCount = sliceOfData.isna().sum()
-            validateDataTypes = sliceOfData.tolist()
-            
-            # assert missingValuesCount <= 1, "Data is Not as Expected"
-            # if missingValuesCount == 1:
-            #     assert (
-            #         sliceOfData.isna().tolist()[2] == True
-            #     ), "Missing Value is not where expected!"
-            #     validateDataTypes.pop(2)
-            # dataTypesOfSlice = [0 if type(i) == str else 1 for i in validateDataTypes]
-            # assert sum(dataTypesOfSlice) == 0, "Unexpected Data Types Found"
-            # Find the "Period Integer"
-            rowIndexToTraverse = rowIndex - 3
-            rowWithDroppedMissingValues = (
-                rawData.iloc[rowIndexToTraverse].fillna("MISSING_VALUE").tolist()
+            validatePeriodData(periodData)
+            # Find the "Period Integer" & Start Time Cell
+            expectedPeriod_RowIndex = rowIndex - 3
+            rowValuesForPeriodAndTimeSearch = (
+                rawData.iloc[expectedPeriod_RowIndex].fillna("MISSING_VALUE").tolist()
             )
-            matchesOfPeriods = []
-            for nthColumn in range(columnIndex, -1, -1):
-                currentCell = rowWithDroppedMissingValues[nthColumn]
-                if currentCell.isdigit():
-                    matchesOfPeriods.append(currentCell)
-            # assert (
-            #     len(matchesOfPeriods) == 1
-            # ), "Cannot Determine Period. Multiple or No Matches Found"
-            assert (
-                0 < int(matchesOfPeriods[0]) < 10
-            ), "Period Found Is Out Of Expected Range."
-            timeColumnIndex = rowWithDroppedMissingValues.index(matchesOfPeriods[0]) + 1
-            timeColumnSlice = (
-                rawData.iloc[rowIndex - 3 : rowIndex + 2, timeColumnIndex]
-                .dropna()
-                .tolist()
+            periodAndTimeData = findPeriodAndTime(
+                rowValuesForPeriodAndTimeSearch, columnIndex
             )
-            assert len(timeColumnSlice) == 2, "Time Column Not Formatted As Expected"
             assignedClassData = {
-                "period": matchesOfPeriods[0],
-                "teacher": sliceOfData[rowIndex],
-                "startTime": timeColumnSlice[0],
-                "endTime": timeColumnSlice[1],
-                "level": sliceOfData[rowIndex - 3],
-                "roomNumber": sliceOfData[rowIndex - 2],
-                "subject": sliceOfData[rowIndex + 1],
+                "period": periodAndTimeData[0],
+                "teacher": periodData[rowIndex],
+                "startTime": periodAndTimeData[1],
+                "level": periodData[rowIndex - 3],
+                "roomNumber": periodData[rowIndex - 2],
+                "subject": periodData[rowIndex + 1],
             }
             myData.append(assignedClassData)
     if myData:
@@ -62,22 +69,46 @@ def processFile(teacherNameParam, fileParam):
     else:
         st.error("❌ No Information Found!")
         st.info("💡 Please enter your name as it appears in the schedule file")
-
-    for assignedClass in myData:
+    st.title(f"Total Classes Today: {len(myData)}")
+    for indexAC, assignedClass in enumerate(myData):
         with st.container():
             # Period and Time together at the top
-            st.markdown(
-                f"**Period {assignedClass['period']}** | ⏰ {assignedClass['startTime']} - {assignedClass['endTime']}"
+            st.subheader(
+                f"**Period {assignedClass['period']}** | ⏰ {assignedClass['startTime']}"
             )
 
             # Rest of information in two columns
             col1, col2 = st.columns(2)
             with col1:
-                st.markdown(f"📚 Subject: {assignedClass['subject']}")
-                st.markdown(f"📝 Level: {assignedClass['level']}")
+                if assignedClass["level"].strip() != "R&D":
+                    st.markdown(f"📝 Level: {assignedClass['level']}")
+                    st.markdown(f"📚 Subject: {assignedClass['subject']}")
             with col2:
-                st.markdown(f"🏫 Room: {assignedClass['roomNumber']}")
+                if assignedClass["level"].strip() != "R&D":
+                    st.markdown(f"🏫 Room: {assignedClass['roomNumber']}")
+            if assignedClass["level"].strip() == "R&D":
+                st.text("R&D")
             st.divider()
+            if indexAC + 1 < len(myData):
+                if (
+                    int(myData[indexAC + 1]["period"]) - int(myData[indexAC]["period"])
+                ) > 1:
+                    periodsEmpty = [
+                        str(i)
+                        for i in range(
+                            int(myData[indexAC]["period"]) + 1,
+                            int(myData[indexAC + 1]["period"]),
+                        )
+                    ]
+                    periodLabel = "Period" if len(periodsEmpty) == 1 else "Periods"
+                    periodTextValue = ", ".join(periodsEmpty)
+                    st.subheader(f"{periodLabel}: {periodTextValue}")
+                    st.text(
+                        "No Class Assigned"
+                        if len(periodsEmpty) == 1
+                        else "No Classes Assigned"
+                    )
+                    st.divider()
 
 
 st.title("My Schedule 🍎")
