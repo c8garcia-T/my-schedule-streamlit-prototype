@@ -55,26 +55,6 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-
-def validatePeriodData(periodDataParam):
-    missingValuesCount = periodDataParam.isna().sum()
-    assert (
-        missingValuesCount <= 3
-    ), "Unexpected Error, Found More than 3 missing values."
-    validateDataTypes = periodDataParam.tolist()
-    if missingValuesCount == 1:  # Substitute Case
-        validateDataTypes.pop(2)
-    if missingValuesCount == 2:  # Catch 2 missing value case
-        validateDataTypes.pop(-1)
-        validateDataTypes.pop(2)
-    if missingValuesCount == 3:  # R&D Case
-        validateDataTypes.pop(1)
-        validateDataTypes.pop(1)
-        validateDataTypes.pop(-1)
-    dataTypesOfSlice = [0 if type(i) == str else 1 for i in validateDataTypes]
-    assert sum(dataTypesOfSlice) == 0, "Unexpected Data Types Found"
-
-
 def findPeriodAndTime(data, columnIndex):
     periodAndTimeDataFound = []
     for nthColumn in range(columnIndex, -1, -1):
@@ -99,8 +79,6 @@ def processFile(nameParam, fileParam):
         if name in rowValues:
             columnIndex = rowValues.index(name)
             periodData = rawData.iloc[rowIndex - 3 : rowIndex + 2, columnIndex]
-            # Validate Data
-            validatePeriodData(periodData)
             # Find the "Period Integer" & Start Time Cell
             expectedPeriod_RowIndex = rowIndex - 3
             rowValuesForPeriodAndTimeSearch = (
@@ -116,6 +94,7 @@ def processFile(nameParam, fileParam):
                 "level": periodData[rowIndex - 3],
                 "roomNumber": periodData[rowIndex - 2],
                 "subject": periodData[rowIndex + 1],
+                "originalTeacher": periodData[rowIndex - 1],
             }
             myData.append(assignedClassData)
     if myData:
@@ -156,6 +135,13 @@ def processFile(nameParam, fileParam):
                         <div class='class-info'>
                             <div class='label'>Room</div>
                             <div class='value'>🏫 {assignedClass['roomNumber']}</div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                if assignedClass["originalTeacher"] and type(assignedClass["originalTeacher"]) == str:
+                    st.markdown(f"""
+                        <div class='class-info'>
+                            <div class='label'>You Are Subbing For</div>
+                            <div class='value'>🔄 {assignedClass['originalTeacher']}</div>
                         </div>
                     """, unsafe_allow_html=True)
             if assignedClass["level"].strip() == "R&D":
