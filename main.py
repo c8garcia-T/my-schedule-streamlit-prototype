@@ -88,10 +88,12 @@ def processFile(nameParam, fileParam):
             rowValuesForPeriodAndTimeSearch = (
                 rawData.iloc[expectedPeriod_RowIndex].fillna("MISSING_VALUE").tolist()
             )
-            periodAndTimeData = findPeriodAndTime(
-                rowValuesForPeriodAndTimeSearch, columnIndex
-            )
-            assignedClassData = {
+            periodNotFoundCounter = 0
+            try:
+                periodAndTimeData = findPeriodAndTime(
+                    rowValuesForPeriodAndTimeSearch, columnIndex
+                )
+                assignedClassData = {
                 "period": periodAndTimeData[0],
                 "teacher": periodData[rowIndex],
                 "startTime": periodAndTimeData[1],
@@ -100,7 +102,12 @@ def processFile(nameParam, fileParam):
                 "subject": periodData[rowIndex + 1],
                 "originalTeacher": periodData[rowIndex - 1],
             }
-            myData.append(assignedClassData)
+                myData.append(assignedClassData)
+            except:
+                periodNotFoundCounter +=1
+                
+                
+            
     if myData:
         st.markdown(
             f"<h3 style='font-weight: 400; color: #2c3e50;'>👋 Here Is Your Schedule, {teacherName.capitalize()}!</h3>",
@@ -215,3 +222,8 @@ uploaded_file = st.file_uploader(
 if (uploaded_file is not None) & (teacherName != ""):
     with st.spinner(f"Getting Information For {teacherName}..."):
         processFile(teacherName, uploaded_file)
+         st.markdown(
+            f"<h3 style='font-weight: 400; color: #2c3e50;'>Your Name was found in {periodNotFoundCounter} unexpected places!</h3>",
+            unsafe_allow_html=True,
+        )
+        
