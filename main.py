@@ -87,6 +87,10 @@ if (uploaded_file is not None) & (teacherName != ""):
             )
             st.title(f"Total Classes Today: {len(myData)}")
             renderMyData(myData)
+            if errorCounter > 0:
+                pluralEnding = "s" if errorCounter > 1 else ""
+                anNeeded = "an" if errorCounter == 1 else "" 
+                st.subheader(f"Your Name Was Found in {anNeeded} Unexpected Place{pluralEnding}: {errorCounter}")
         else:
             st.error("❌ No Information Found!")
             st.title("💡 Please enter your name as it appears in the schedule file")
