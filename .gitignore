@@ -2,3 +2,5 @@
 .venv/*
 # Data Files
 *.xlsx
+# Misc.
+__pycache__
