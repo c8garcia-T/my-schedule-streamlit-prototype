@@ -6,7 +6,7 @@ def renderMyData(data):
             # Period and Time together at the top
             st.markdown(
                 f"""<div class='period-header'>
-                    <h2>Period {assignedClass['period']} | ⏰ {assignedClass['startTime']}</h2>
+                    <h2>Period {assignedClass['period']} | ⏰ {assignedClass['startTime']} - {assignedClass['endTime']}</h2>
                 </div>""",
                 unsafe_allow_html=True,
             )
