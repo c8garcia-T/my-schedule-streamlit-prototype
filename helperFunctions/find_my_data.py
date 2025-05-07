@@ -1,6 +1,6 @@
 import pandas as pd
 from helperFunctions.find_period_and_time import findPeriodAndTime
-
+from datetime import datetime, timedelta
 
 def findMyData(teacherName, fileUploaded):
     teacherName = teacherName.strip().lower()
@@ -25,10 +25,13 @@ def findMyData(teacherName, fileUploaded):
                 periodAndTimeData = findPeriodAndTime(
                     expectedRowForPeriod, targetColumnIndex
                 )
+                endTime = datetime.strptime(periodAndTimeData[1],"%H:%M:%S") + timedelta(minutes=42)
+                startTime = datetime.strptime(periodAndTimeData[1],"%H:%M:%S").strftime("%H:%M")
                 assignedClassData = {
                     "period": periodAndTimeData[0],
                     "teacher": expectedTargetData[rowIndex],
-                    "startTime": periodAndTimeData[1],
+                    "startTime": startTime,
+                    "endTime":endTime.strftime("%H:%M"),
                     "level": expectedTargetData[rowIndex - 3],
                     "roomNumber": expectedTargetData[rowIndex - 2],
                     "subject": expectedTargetData[rowIndex + 1],
@@ -37,5 +40,4 @@ def findMyData(teacherName, fileUploaded):
                 myData.append(assignedClassData)
             except:
                 periodNotFoundCounter += 1
-    print(periodNotFoundCounter)
     return myData, periodNotFoundCounter
